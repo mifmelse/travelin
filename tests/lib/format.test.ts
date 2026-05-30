@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { formatTripDateRange, formatCurrency } from '@/lib/format'
+import {
+  formatTripDateRange,
+  formatCurrency,
+  parseAmountToCents,
+} from '@/lib/format'
 
 describe('formatTripDateRange', () => {
   it('returns placeholder when both dates are null', () => {
@@ -69,6 +73,53 @@ describe('formatCurrency', () => {
     const result = formatCurrency(15000000, 'USD')
     expect(typeof result).toBe('string')
     expect(result.length).toBeGreaterThan(0)
+  })
+})
+
+describe('parseAmountToCents', () => {
+  it('converts a whole-unit string to integer cents', () => {
+    // "150000" rupiah → 15000000 cents
+    expect(parseAmountToCents('150000')).toBe(15000000)
+  })
+
+  it('handles zero', () => {
+    expect(parseAmountToCents('0')).toBe(0)
+  })
+
+  it('returns null for null input', () => {
+    expect(parseAmountToCents(null)).toBeNull()
+  })
+
+  it('returns null for undefined input', () => {
+    expect(parseAmountToCents(undefined)).toBeNull()
+  })
+
+  it('returns null for empty string', () => {
+    expect(parseAmountToCents('')).toBeNull()
+  })
+
+  it('returns null for whitespace-only string', () => {
+    expect(parseAmountToCents('   ')).toBeNull()
+  })
+
+  it('trims surrounding whitespace before parsing', () => {
+    expect(parseAmountToCents('  150000  ')).toBe(15000000)
+  })
+
+  it('throws on decimal input', () => {
+    expect(() => parseAmountToCents('150.50')).toThrow('angka bulat')
+  })
+
+  it('throws on negative input', () => {
+    expect(() => parseAmountToCents('-100')).toThrow('angka bulat')
+  })
+
+  it('throws on non-numeric input', () => {
+    expect(() => parseAmountToCents('abc')).toThrow('angka bulat')
+  })
+
+  it('throws on thousands separators', () => {
+    expect(() => parseAmountToCents('150,000')).toThrow('angka bulat')
   })
 })
 

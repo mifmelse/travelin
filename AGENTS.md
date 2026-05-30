@@ -177,19 +177,23 @@ trip_members
   UNIQUE (trip_id, profile_id)
 
 bookings
-  id (uuid, PK)
+  id (uuid, PK, gen_random_uuid())
   trip_id (uuid, FK trips.id, ON DELETE CASCADE, NOT NULL)
-  type (text, NOT NULL)
-    ENUM: flight | hotel | transport | activity | other
-  vendor (text, nullable)
-  confirmation_number (text, nullable)
-  start_at (timestamptz, nullable)
-  end_at (timestamptz, nullable)
+  type (booking_type enum, NOT NULL)
+    ENUM values: flight | lodging | activity | transport | other
+  provider (text, nullable)
+  confirmation_code (text, nullable)
   amount_cents (bigint, nullable)
   currency (text, default 'IDR')
-  notes (text, nullable)
-  created_at (timestamptz)
-  updated_at (timestamptz)
+  booked_at (timestamptz, nullable)
+  attachments (jsonb, default '[]'::jsonb)
+    ← reserved for future file/email attachments (not used in MVP UI)
+  raw_email_id (text, nullable)
+    ← reserved for future email-parsing ingestion (not used in MVP UI)
+  created_at (timestamptz, NOT NULL, default now())
+  updated_at (timestamptz, NOT NULL, default now())
+  INDEX: idx_bookings_trip on (trip_id)
+  -- NOTE: no `notes` column. There is a single `booked_at` (not start_at/end_at).
 
 itinerary_items
   id (uuid, PK, gen_random_uuid())
@@ -1107,6 +1111,18 @@ This section captures key engineering decisions and their rationale. It is both 
 **Lesson learned**: Documents written from memory drift from reality. The fix is not "write better docs" — it's "cross-reference docs against source-of-truth artifacts before relying on them for decisions." This is now a workflow step before any Claude Code delegation involving database schema.
 
 **Reversibility**: N/A — this is a documentation update, no code or data affected.
+
+### D13: Bookings schema drift resolved (Booking records feature)
+
+**Date**: During the Booking records feature build.
+
+**Context**: Before implementing Booking records CRUD, cross-referenced AGENTS.md Section 4 against the migration (`20260522121348_initial_schema.sql`) and generated types (`src/types/database.ts`), per the D12 workflow. Found the documented `bookings` schema drifted from reality: doc had `vendor`, `confirmation_number`, `start_at`/`end_at`, `notes`, and enum `flight | hotel | transport | activity | other`. The actual table has `provider`, `confirmation_code`, a single `booked_at`, no `notes`, plus `attachments` (jsonb) and `raw_email_id`, and the `booking_type` enum is `flight | lodging | activity | transport | other`.
+
+**Decision**: Update Section 4 to match the migration (source of truth). Built the feature against the real schema. Scoped the MVP form to core fields (type, provider, confirmation_code, booked_at, amount_cents, currency); left `attachments` and `raw_email_id` reserved for future email-parsing/upload work.
+
+**Rationale**: Same as D12 — the migration generates the TypeScript types, so any drift becomes runtime/type errors. Catching it before writing code avoided building against a fictional schema.
+
+**Reversibility**: N/A — documentation update plus net-new feature code.
 
 ---
 

@@ -30,3 +30,18 @@ export function formatCurrency(amountCents: number, currency = 'IDR'): string {
     maximumFractionDigits: 0,
   }).format(amountCents / 100)
 }
+
+/**
+ * Parse a whole-unit amount string (e.g. "150000") into integer cents (15000000).
+ * Returns null for empty input. Throws on non-integer / negative input so callers
+ * surface a loud error instead of silently storing bad money values.
+ */
+export function parseAmountToCents(value: string | null | undefined): number | null {
+  if (value == null) return null
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  if (!/^\d+$/.test(trimmed)) {
+    throw new Error('Jumlah harus berupa angka bulat tanpa desimal')
+  }
+  return Number(trimmed) * 100
+}
