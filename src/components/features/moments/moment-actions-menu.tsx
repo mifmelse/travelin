@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -15,6 +15,8 @@ import type { PostView } from '@/services/post.service'
 
 export function MomentActionsMenu({ tripId, post }: { tripId: string; post: PostView }) {
   const [editOpen, setEditOpen] = useState(false)
+  const [, startTransition] = useTransition()
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <>
@@ -30,13 +32,19 @@ export function MomentActionsMenu({ tripId, post }: { tripId: string; post: Post
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => deletePostAction(tripId, post.id)}
+            onClick={() =>
+              startTransition(async () => {
+                const res = await deletePostAction(tripId, post.id)
+                if (res.error) setError(res.error)
+              })
+            }
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" /> Hapus
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {error && <p className="px-1 text-xs text-destructive">{error}</p>}
       <EditMomentDialog tripId={tripId} post={post} open={editOpen} onOpenChange={setEditOpen} />
     </>
   )

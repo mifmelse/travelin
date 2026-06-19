@@ -20,7 +20,7 @@ export function LikeButton({
 }) {
   const [liked, setLiked] = useState(initialLiked)
   const [count, setCount] = useState(initialCount)
-  const [, startTransition] = useTransition()
+  const [pending, startTransition] = useTransition()
 
   function onClick() {
     if (!canReact) return
@@ -39,7 +39,7 @@ export function LikeButton({
   return (
     <button
       onClick={onClick}
-      disabled={!canReact}
+      disabled={!canReact || pending}
       className={cn('flex items-center gap-1.5 text-sm', liked ? 'text-red-500' : 'text-muted-foreground')}
     >
       <Heart className={cn('h-4 w-4', liked && 'fill-current')} />

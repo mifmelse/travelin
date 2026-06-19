@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,7 +43,6 @@ function MomentForm({ tripId, onSuccess }: { tripId: string; onSuccess: () => vo
     {}
   )
   const [files, setFiles] = useState<File[]>([])
-  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (state.success) onSuccess()
@@ -51,7 +50,7 @@ function MomentForm({ tripId, onSuccess }: { tripId: string; onSuccess: () => vo
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const fd = new FormData(formRef.current!)
+    const fd = new FormData(e.currentTarget)
     fd.delete('media')
     for (let i = 0; i < files.length; i++) {
       fd.append('media', files[i])
@@ -64,7 +63,7 @@ function MomentForm({ tripId, onSuccess }: { tripId: string; onSuccess: () => vo
   }
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} className="space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="body">Caption</Label>
         <textarea
