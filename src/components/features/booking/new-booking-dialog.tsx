@@ -70,7 +70,7 @@ function NewBookingForm({
   }, [state.success, onSuccess])
 
   const baseCurrency = useTrip().base_currency
-  const [currency, setCurrency] = useState('IDR')
+  const [currency, setCurrency] = useState(baseCurrency)
   const [rate, setRate] = useState('')
   const showRate = currency !== baseCurrency
 
