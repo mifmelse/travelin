@@ -23,6 +23,12 @@ const bookingBaseSchema = z.object({
     .regex(/^\d+$/, 'Jumlah harus angka bulat tanpa desimal')
     .optional()
     .or(z.literal('')),
+  // Optional manual exchange rate to the trip's base currency. Whole or decimal.
+  exchange_rate: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, 'Kurs harus berupa angka')
+    .optional()
+    .or(z.literal('')),
   currency: z.enum(BOOKING_CURRENCIES),
 })
 

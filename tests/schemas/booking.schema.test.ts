@@ -113,6 +113,33 @@ describe('createBookingSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('accepts a decimal exchange_rate', () => {
+    const result = createBookingSchema.safeParse({
+      type: 'lodging',
+      currency: 'SGD',
+      exchange_rate: '11650.5',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an empty exchange_rate', () => {
+    const result = createBookingSchema.safeParse({
+      type: 'lodging',
+      currency: 'IDR',
+      exchange_rate: '',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects a non-numeric exchange_rate', () => {
+    const result = createBookingSchema.safeParse({
+      type: 'lodging',
+      currency: 'SGD',
+      exchange_rate: 'abc',
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateBookingSchema', () => {
