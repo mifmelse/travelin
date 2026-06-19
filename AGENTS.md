@@ -164,6 +164,8 @@ trips
   status (text, NOT NULL, default 'planning')
     ENUM: planning | ongoing | completed | archived
   cover_image_url (text, nullable)
+  base_currency (text, NOT NULL, default 'IDR')
+    ← target currency for the expense tracker's grand total (see D15)
   created_at (timestamptz, default now())
   updated_at (timestamptz, default now())
 
@@ -220,22 +222,37 @@ itinerary_items
   INDEX: idx_itinerary_start on (start_at)
 
 expenses
-  id (uuid, PK)
+  id (uuid, PK, gen_random_uuid())
   trip_id (uuid, FK trips.id, ON DELETE CASCADE, NOT NULL)
   paid_by (uuid, FK profiles.id, NOT NULL)
   amount_cents (bigint, NOT NULL)
   currency (text, NOT NULL, default 'IDR')
-  category (text, nullable)
+  exchange_rate (numeric(20, 10), nullable)
+    ← optional manual rate to the trip's base_currency (no FX API; see D15)
+  category (expense_category enum, NOT NULL, default 'other')
+    ENUM values: food | transport | lodging | activity | shopping | other
   description (text, nullable)
-  occurred_at (timestamptz, default now())
-  created_at (timestamptz)
+  occurred_at (timestamptz, NOT NULL, default now())
+  receipt_url (text, nullable)
+    ← reserved for future receipt upload (not used in MVP UI)
+  created_at (timestamptz, NOT NULL, default now())
+  updated_at (timestamptz, NOT NULL, default now())
+  INDEX: idx_expenses_trip on (trip_id)
+  INDEX: idx_expenses_paid_by on (paid_by)
+  -- NOTE: amount is whole-unit * 100 (parseAmountToCents). category is a NOT
+  --       NULL enum (not free text). There is `exchange_rate`, no `notes`.
 
 expense_splits
-  id (uuid, PK)
+  id (uuid, PK, gen_random_uuid())
   expense_id (uuid, FK expenses.id, ON DELETE CASCADE, NOT NULL)
-  profile_id (uuid, FK profiles.id, NOT NULL)
-  amount_cents (bigint, NOT NULL)
+  profile_id (uuid, FK profiles.id, ON DELETE CASCADE, NOT NULL)
+  share_cents (bigint, NOT NULL)
+    ← this participant's share (NOT `amount_cents`); shares sum to amount_cents
+  settled (boolean, NOT NULL, default false)
+  settled_at (timestamptz, nullable)
   UNIQUE (expense_id, profile_id)
+  INDEX: idx_splits_expense on (expense_id)
+  INDEX: idx_splits_profile on (profile_id)
 
 trip_invites
   id (uuid, PK, gen_random_uuid())
@@ -1192,6 +1209,49 @@ This section captures key engineering decisions and their rationale. It is both 
 - No per-invitee tracking (who joined via which link). Acceptable for MVP.
 
 **Reversibility**: High — `trip_invites` is additive; an email-based flow can be layered on later.
+
+### D15: Expense tracker — manual FX (no API), custom split, settlement tracking
+
+**Date**: Expense tracker build (MVP #4), 2026-06-19.
+
+**Context**: Final MVP feature. Per the D12/D13 workflow, cross-referenced §4 against the
+migration + generated types first and found drift: `expenses` actually has
+`exchange_rate`, a NOT NULL `expense_category` enum (food | transport | lodging |
+activity | shopping | other), `receipt_url`, and `updated_at`; `expense_splits` uses
+`share_cents` (not `amount_cents`) and carries `settled` / `settled_at`. §4 updated to
+match before any code was written. The per-row `exchange_rate` was read as a design
+signal: each expense should capture the rate at transaction time, not a global trip rate.
+
+**Decisions**:
+1. **Multi-currency aggregation without an FX API.** Each expense keeps its own
+   `currency` + an optional, manually-entered `exchange_rate` to the trip's
+   `base_currency`. The UI always shows a per-currency breakdown (always exact) and a
+   base-currency grand total from expenses that carry a rate (others are flagged as
+   excluded). Rejected a rate API: free tiers give only *today's* rate (wrong for past
+   `occurred_at`), it breaks offline (a travel app must log expenses without signal),
+   adds a dependency against §2/§11, and even mid-market rates differ from what the
+   traveler actually paid. Added `trips.base_currency` (migration
+   `20260619035306_trip_base_currency.sql`, default 'IDR') as the conversion target.
+2. **Split model = equal + custom.** Splitting is optional (solo trips log without
+   splits). When on, the payer picks participants and either an even split (remainder
+   distributed one whole unit at a time, exact) or per-person amounts. Hard validation:
+   sum of `share_cents` must equal `amount_cents` (enforced in the Zod refine and re-
+   checked server-side). All split math is whole-unit then `* 100`, consistent with the
+   rest of the app's money model.
+3. **Settlement tracking.** `expense_splits.settled` / `settled_at` drive a balance
+   summary (per-member net + actionable unsettled debts with a "Lunaskan" button). Any
+   trip member may settle (shared bookkeeping, not owner-only). Editing an expense
+   replaces its splits and therefore resets their settled state — an amount/participant
+   change invalidates prior settlement anyway.
+
+**Trade-offs accepted**:
+- Grand total only covers expenses the user gave a rate for; the rest stay per-currency.
+- Editing an expense resets settlement on its splits (documented in `updateExpense`).
+- Whole-unit money model means currencies with subunits (USD) are tracked at unit
+  granularity — consistent with existing `formatCurrency` / `parseAmountToCents`.
+
+**Reversibility**: Medium. `base_currency` is additive; an FX API could later just
+pre-fill the manual rate field without schema change.
 
 ---
 
