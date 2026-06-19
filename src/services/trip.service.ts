@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { CURRENCIES } from '@/lib/currency'
 
 // =========================================
 // SCHEMAS
@@ -15,6 +16,7 @@ const tripBaseSchema = z.object({
   destination: z.string().max(100).optional().or(z.literal('')),
   start_date: z.string().optional().or(z.literal('')),
   end_date: z.string().optional().or(z.literal('')),
+  base_currency: z.enum(CURRENCIES).optional(),
 })
 
 const dateRangeRefine = (data: {
@@ -186,6 +188,7 @@ export async function createTrip(
     destination: input.destination || null,
     start_date: input.start_date || null,
     end_date: input.end_date || null,
+    base_currency: input.base_currency || 'IDR',
   }
 
   // 1. Insert trip
@@ -235,6 +238,8 @@ export async function updateTrip(
   if (input.destination !== undefined) payload.destination = input.destination || null
   if (input.start_date !== undefined) payload.start_date = input.start_date || null
   if (input.end_date !== undefined) payload.end_date = input.end_date || null
+  if (input.base_currency !== undefined)
+    payload.base_currency = input.base_currency
   if (input.status !== undefined) payload.status = input.status
 
   const { data, error } = await supabase

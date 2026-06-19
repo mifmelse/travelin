@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import { CURRENCIES } from '@/lib/currency'
 import { updateTripAction } from '@/app/(app)/trips/actions'
 
 type Trip = {
@@ -22,6 +23,7 @@ type Trip = {
   start_date: string | null
   end_date: string | null
   status: 'planning' | 'ongoing' | 'completed' | 'archived'
+  base_currency?: string | null
 }
 
 type EditTripDialogProps = {
@@ -76,6 +78,7 @@ function EditTripForm({ trip, onSuccess, onCancel }: EditTripFormProps) {
   const [startDate, setStartDate] = useState(trip.start_date ?? '')
   const [endDate, setEndDate] = useState(trip.end_date ?? '')
   const [status, setStatus] = useState(trip.status)
+  const [baseCurrency, setBaseCurrency] = useState(trip.base_currency ?? 'IDR')
 
   // Close dialog on success (this effect is fine — it doesn't setState)
   useEffect(() => {
@@ -150,6 +153,23 @@ function EditTripForm({ trip, onSuccess, onCancel }: EditTripFormProps) {
           {state.fieldErrors.end_date[0]}
         </p>
       )}
+
+      <div className="space-y-2">
+        <Label htmlFor="base_currency">Mata uang utama</Label>
+        <select
+          id="base_currency"
+          name="base_currency"
+          value={baseCurrency}
+          onChange={(e) => setBaseCurrency(e.target.value)}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="status">Status</Label>

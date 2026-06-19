@@ -27,6 +27,7 @@ export async function createTripAction(
     destination: formData.get('destination'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
+    base_currency: formData.get('base_currency') || undefined,
   })
 
   if (!parsed.success) {
@@ -61,6 +62,7 @@ export async function updateTripAction(
     destination: formData.get('destination'),
     start_date: formData.get('start_date'),
     end_date: formData.get('end_date'),
+    base_currency: formData.get('base_currency') || undefined,
     status: formData.get('status') || undefined,
   })
 

@@ -31,6 +31,7 @@ type Trip = {
   start_date: string | null
   end_date: string | null
   status: 'planning' | 'ongoing' | 'completed' | 'archived'
+  base_currency?: string | null
 }
 
 export function TripActionsMenu({ trip }: { trip: Trip }) {

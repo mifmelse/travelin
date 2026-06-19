@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { CURRENCIES } from '@/lib/currency'
 import {
   createTripAction,
   type ActionState,
@@ -91,6 +92,25 @@ export function NewTripDialog() {
                 </p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="base_currency">Mata uang utama</Label>
+            <select
+              id="base_currency"
+              name="base_currency"
+              defaultValue="IDR"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Mata uang dasar untuk total pengeluaran trip.
+            </p>
           </div>
 
           <div className="space-y-2">
