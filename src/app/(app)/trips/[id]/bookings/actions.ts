@@ -28,6 +28,9 @@ export async function createBookingAction(
     booked_at: formData.get('booked_at'),
     amount: formData.get('amount'),
     currency: formData.get('currency'),
+    // The exchange_rate input is only rendered for non-base currencies, so it
+    // may be absent; treat absent as undefined.
+    exchange_rate: formData.get('exchange_rate') ?? undefined,
   })
 
   if (!parsed.success) {
@@ -63,6 +66,9 @@ export async function updateBookingAction(
     booked_at: formData.get('booked_at'),
     amount: formData.get('amount'),
     currency: formData.get('currency'),
+    // The exchange_rate input is only rendered for non-base currencies, so it
+    // may be absent; treat absent as undefined.
+    exchange_rate: formData.get('exchange_rate') ?? undefined,
   })
 
   if (!parsed.success) {
