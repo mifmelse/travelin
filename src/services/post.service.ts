@@ -313,6 +313,8 @@ export async function updatePost(
     .eq('id', postId)
   if (error) throw new Error(`Failed to update post: ${error.message}`)
 
+  // NOTE: unlike createPost, appended media is not rolled back on a mid-loop
+  // failure — leftover files/rows are harmless (append-only, no corruption).
   if (newMedia.length > 0) {
     const { count } = await supabase
       .from('post_media')
@@ -389,7 +391,9 @@ export async function toggleReaction(
   const { error } = await supabase
     .from('post_reactions')
     .insert({ post_id: postId, profile_id: userId })
-  if (error) throw new Error(`Failed to like: ${error.message}`)
+  // A concurrent/double like can collide on the unique (post_id, profile_id)
+  // constraint — that just means it's already liked, not a real failure.
+  if (error && error.code !== '23505') throw new Error(`Failed to like: ${error.message}`)
   return { liked: true }
 }
 
