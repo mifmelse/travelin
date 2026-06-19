@@ -119,7 +119,9 @@ from full row objects.
   missing-rate exclusion, null-amount booking skipped, multi-currency mix,
   empty input.
 - Extend `tests/schemas/booking.schema.test.ts` — `exchange_rate` optional and,
-  when present, must be positive.
+  when present, validated as a numeric string (mirrors the expense schema;
+  positivity is not enforced — a zero/missing rate only under-counts and is
+  flagged, never produces a wrong non-zero total).
 
 ## 7. Out of scope (YAGNI)
 
