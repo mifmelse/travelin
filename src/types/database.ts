@@ -373,6 +373,7 @@ export type Database = {
       }
       trips: {
         Row: {
+          base_currency: string
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -386,6 +387,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          base_currency?: string
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -399,6 +401,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          base_currency?: string
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
