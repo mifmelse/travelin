@@ -47,6 +47,7 @@ export type Database = {
           confirmation_code: string | null
           created_at: string
           currency: string | null
+          exchange_rate: number | null
           id: string
           provider: string | null
           raw_email_id: string | null
@@ -61,6 +62,7 @@ export type Database = {
           confirmation_code?: string | null
           created_at?: string
           currency?: string | null
+          exchange_rate?: number | null
           id?: string
           provider?: string | null
           raw_email_id?: string | null
@@ -75,6 +77,7 @@ export type Database = {
           confirmation_code?: string | null
           created_at?: string
           currency?: string | null
+          exchange_rate?: number | null
           id?: string
           provider?: string | null
           raw_email_id?: string | null
