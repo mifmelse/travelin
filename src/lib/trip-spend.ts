@@ -132,6 +132,7 @@ export function buildTripSpendReport({
   const byCurrencyList = [...byCurrency.entries()]
     .map(([currency, cents]) => ({ currency, cents }))
     .sort((a, b) => {
+      if (a.currency === b.currency) return 0
       if (a.currency === baseCurrency) return -1
       if (b.currency === baseCurrency) return 1
       return a.currency.localeCompare(b.currency)

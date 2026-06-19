@@ -65,6 +65,18 @@ describe('buildTripSpendReport', () => {
     expect(r.grandTotalBaseCents).toBe(1165000)
   })
 
+  it('rounds fractional cents when converting foreign currency', () => {
+    const r = buildTripSpendReport({
+      bookings: [],
+      // 3 SGD cents * 116.5 = 349.5 → rounds to 350
+      expenses: [
+        expense({ amount_cents: 3, currency: 'SGD', exchange_rate: 116.5 }),
+      ],
+      baseCurrency: 'IDR',
+    })
+    expect(r.expensesBaseCents).toBe(350)
+  })
+
   it('excludes a foreign line without a rate but still counts its currency', () => {
     const r = buildTripSpendReport({
       bookings: [],
@@ -96,6 +108,16 @@ describe('buildTripSpendReport', () => {
       baseCurrency: 'IDR',
     })
     expect(r.byCategory).toEqual([{ bucket: 'lodging', baseCents: 50000 }])
+  })
+
+  it('converts a foreign-currency booking using its exchange_rate', () => {
+    const r = buildTripSpendReport({
+      bookings: [booking({ amount_cents: 10000, currency: 'SGD', exchange_rate: 2 })],
+      expenses: [],
+      baseCurrency: 'IDR',
+    })
+    expect(r.bookingsBaseCents).toBe(20000)
+    expect(r.grandTotalBaseCents).toBe(20000)
   })
 
   it('aggregates per currency with the base currency listed first', () => {
