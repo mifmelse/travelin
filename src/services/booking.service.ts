@@ -23,6 +23,12 @@ const bookingBaseSchema = z.object({
     .regex(/^\d+$/, 'Jumlah harus angka bulat tanpa desimal')
     .optional()
     .or(z.literal('')),
+  // Optional manual exchange rate to the trip's base currency. Whole or decimal.
+  exchange_rate: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/, 'Kurs harus berupa angka')
+    .optional()
+    .or(z.literal('')),
   currency: z.enum(BOOKING_CURRENCIES),
 })
 
@@ -50,7 +56,7 @@ export async function listBookingsForTrip(
   const { data, error } = await supabase
     .from('bookings')
     .select(
-      'id, trip_id, type, provider, confirmation_code, booked_at, amount_cents, currency'
+      'id, trip_id, type, provider, confirmation_code, booked_at, amount_cents, currency, exchange_rate'
     )
     .eq('trip_id', tripId)
     .order('booked_at', { ascending: true, nullsFirst: false })
@@ -101,6 +107,7 @@ export async function createBooking(
       booked_at: input.booked_at || null,
       amount_cents: parseAmountToCents(input.amount),
       currency: input.currency,
+      exchange_rate: input.exchange_rate ? Number(input.exchange_rate) : null,
     })
     .select()
     .single()
@@ -132,6 +139,10 @@ export async function updateBooking(
   if (input.amount !== undefined)
     payload.amount_cents = parseAmountToCents(input.amount)
   if (input.currency !== undefined) payload.currency = input.currency
+  if (input.exchange_rate !== undefined)
+    payload.exchange_rate = input.exchange_rate
+      ? Number(input.exchange_rate)
+      : null
 
   const { data, error } = await supabase
     .from('bookings')

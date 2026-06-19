@@ -18,6 +18,7 @@ import {
   type BookingCurrency,
 } from './booking-meta'
 import { updateBookingAction } from '@/app/(app)/trips/[id]/bookings/actions'
+import { useTrip } from '@/components/features/trip/trip-context'
 
 export type Booking = {
   id: string
@@ -28,6 +29,7 @@ export type Booking = {
   booked_at: string | null
   amount_cents: number | null
   currency: string | null
+  exchange_rate: number | null
 }
 
 // Convert a stored timestamptz string to a value for <input type="datetime-local">.
@@ -97,6 +99,11 @@ function EditBookingForm({
   const [currency, setCurrency] = useState<BookingCurrency>(
     (booking.currency as BookingCurrency) ?? 'IDR'
   )
+  const baseCurrency = useTrip().base_currency
+  const [rate, setRate] = useState(
+    booking.exchange_rate != null ? String(booking.exchange_rate) : ''
+  )
+  const showRate = currency !== baseCurrency
 
   useEffect(() => {
     if (state.success) onSuccess()
@@ -201,6 +208,27 @@ function EditBookingForm({
           </select>
         </div>
       </div>
+
+      {showRate && (
+        <div className="space-y-2">
+          <Label htmlFor="exchange_rate">
+            Kurs ke {baseCurrency} (opsional)
+          </Label>
+          <Input
+            id="exchange_rate"
+            name="exchange_rate"
+            inputMode="decimal"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+            placeholder={`1 ${currency} = ? ${baseCurrency}`}
+          />
+          {state.fieldErrors?.exchange_rate && (
+            <p className="text-sm text-destructive">
+              {state.fieldErrors.exchange_rate[0]}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>

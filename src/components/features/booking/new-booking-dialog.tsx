@@ -19,6 +19,7 @@ import {
   createBookingAction,
   type ActionState,
 } from '@/app/(app)/trips/[id]/bookings/actions'
+import { useTrip } from '@/components/features/trip/trip-context'
 
 export function NewBookingDialog({ tripId }: { tripId: string }) {
   const [open, setOpen] = useState(false)
@@ -67,6 +68,11 @@ function NewBookingForm({
   useEffect(() => {
     if (state.success) onSuccess()
   }, [state.success, onSuccess])
+
+  const baseCurrency = useTrip().base_currency
+  const [currency, setCurrency] = useState(baseCurrency)
+  const [rate, setRate] = useState('')
+  const showRate = currency !== baseCurrency
 
   return (
     <form action={formAction} className="space-y-4">
@@ -146,7 +152,8 @@ function NewBookingForm({
           <select
             id="currency"
             name="currency"
-            defaultValue="IDR"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
             className="rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
             {BOOKING_CURRENCIES.map((c) => (
@@ -157,6 +164,27 @@ function NewBookingForm({
           </select>
         </div>
       </div>
+
+      {showRate && (
+        <div className="space-y-2">
+          <Label htmlFor="exchange_rate">
+            Kurs ke {baseCurrency} (opsional)
+          </Label>
+          <Input
+            id="exchange_rate"
+            name="exchange_rate"
+            inputMode="decimal"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+            placeholder={`1 ${currency} = ? ${baseCurrency}`}
+          />
+          {state.fieldErrors?.exchange_rate && (
+            <p className="text-sm text-destructive">
+              {state.fieldErrors.exchange_rate[0]}
+            </p>
+          )}
+        </div>
+      )}
 
       <DialogFooter>
         <Button

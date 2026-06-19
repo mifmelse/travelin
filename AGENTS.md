@@ -187,6 +187,8 @@ bookings
   confirmation_code (text, nullable)
   amount_cents (bigint, nullable)
   currency (text, default 'IDR')
+  exchange_rate (numeric(20, 10), nullable)
+    ← optional manual rate to the trip's base_currency (mirrors expenses; D16)
   booked_at (timestamptz, nullable)
   attachments (jsonb, default '[]'::jsonb)
     ← reserved for future file/email attachments (not used in MVP UI)
@@ -1252,6 +1254,34 @@ signal: each expense should capture the rate at transaction time, not a global t
 
 **Reversibility**: Medium. `base_currency` is additive; an FX API could later just
 pre-fill the manual rate field without schema change.
+
+### D16: Trip spend report combines bookings + expenses as non-overlapping streams
+
+**Date**: 2026-06-19.
+
+**Context**: Both `bookings` and `expenses` carry money, raising the question of
+how to report total trip spending without double-counting.
+
+**Decision**: Treat bookings and expenses as two **non-overlapping** spend
+streams — big-ticket prepaid/arranged items live as bookings, on-the-ground
+cash spend lives as expenses — and report `total = bookings + expenses`. No
+system-level double-count prevention (discipline rests with the user). Added
+`bookings.exchange_rate` (migration `20260619111227_booking_exchange_rate.sql`)
+so booking amounts convert to the trip `base_currency` via the same manual-FX
+model as expenses (D15). The Overview page hosts the report: a base-currency
+grand total, per-source subtotals, a per-category breakdown over a unified
+7-bucket set (union of `booking.type` + `expense.category`), and an exact
+per-currency breakdown. Settlement stays expense-only (bookings have no
+payer/split). Pure report logic lives in `src/lib/trip-spend.ts`
+(`buildTripSpendReport`), unit-tested per §10.
+
+**Trade-offs accepted**: No double-count enforcement; the grand total only
+includes lines that are in the base currency or carry a manual rate (others are
+flagged as excluded). `flight` is kept as its own bucket rather than folded into
+transport.
+
+**Reversibility**: High — `exchange_rate` is additive; the report is a read-only
+derivation over existing data.
 
 ---
 
