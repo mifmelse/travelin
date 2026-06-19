@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useState, useTransition } from 'react'
 import { Plus } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,10 +38,11 @@ export function NewMomentDialog({ tripId }: { tripId: string }) {
 }
 
 function MomentForm({ tripId, onSuccess }: { tripId: string; onSuccess: () => void }) {
-  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+  const [state, formAction] = useActionState<ActionState, FormData>(
     createPostAction.bind(null, tripId),
     {}
   )
+  const [pending, startTransition] = useTransition()
   const [files, setFiles] = useState<File[]>([])
 
   useEffect(() => {
@@ -59,7 +60,9 @@ function MomentForm({ tripId, onSuccess }: { tripId: string; onSuccess: () => vo
         if (poster) fd.append(`thumb_${i}`, poster)
       }
     }
-    formAction(fd)
+    startTransition(() => {
+      formAction(fd)
+    })
   }
 
   return (
