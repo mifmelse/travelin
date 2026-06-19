@@ -30,7 +30,9 @@ const nonEmptyRefine = (d: { body?: string; media_count?: number }) =>
 const nonEmptyError = { message: 'Tulis sesuatu atau lampirkan media', path: ['body'] }
 
 export const createPostSchema = postBaseSchema.refine(nonEmptyRefine, nonEmptyError)
-export const updatePostSchema = postBaseSchema.refine(nonEmptyRefine, nonEmptyError)
+// Non-emptiness on update is enforced in `updatePost` against EXISTING + new
+// media (a photo-only post legitimately has no body), so no schema refine here.
+export const updatePostSchema = postBaseSchema
 
 export const commentSchema = z.object({
   body: z.string().min(1, 'Komentar tidak boleh kosong').max(1000, 'Komentar maksimal 1000 karakter'),
@@ -303,6 +305,17 @@ export async function updatePost(
 ) {
   const { tripId } = await assertPostAuthorOrTripOwner(supabase, postId, userId)
   assertValidMedia(newMedia)
+
+  // A post must still have a caption OR at least one media item after editing.
+  // Count existing media (the edit form does not resend existing files) plus any
+  // newly appended media — a photo-only post legitimately has an empty body.
+  const { count: existingMedia } = await supabase
+    .from('post_media')
+    .select('id', { count: 'exact', head: true })
+    .eq('post_id', postId)
+  if (!(input.body && input.body.trim()) && (existingMedia ?? 0) + newMedia.length === 0) {
+    throw new Error('Tulis sesuatu atau lampirkan media')
+  }
 
   const { error } = await supabase
     .from('posts')
