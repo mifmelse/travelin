@@ -7,6 +7,7 @@ import {
   Calendar as CalendarIcon,
   ClipboardList,
   DollarSign,
+  Images,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,6 +21,7 @@ const ITEMS = [
   { segment: '/itinerary', icon: CalendarIcon, label: 'Itinerary' },
   { segment: '/bookings', icon: ClipboardList, label: 'Bookings' },
   { segment: '/expenses', icon: DollarSign, label: 'Expenses' },
+  { segment: '/moments', icon: Images, label: 'Moments' },
   { segment: '/members', icon: Users, label: 'Members' },
 ] as const
 
